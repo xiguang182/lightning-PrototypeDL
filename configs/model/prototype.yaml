@@ -21,5 +21,8 @@ net:
   num_layers: 4
   num_maps: 32
 
+lambdas: [20, 1, 1, 1]
+  
+
 # compile model for faster training with pytorch 2.0
 compile: false
