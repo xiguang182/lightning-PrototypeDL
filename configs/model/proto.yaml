@@ -1,4 +1,4 @@
-_target_: src.models.mnist_module.MNISTLitModule
+_target_: src.models.prototype_module.ProtoLitModule
 
 optimizer:
   _target_: torch.optim.Adam
@@ -16,7 +16,7 @@ scheduler:
 net:
   _target_: src.models.components.CEA.CAEModel
   in_shapes: [1, 1, 28, 28]
-  output_size: 10
+  num_classes: 10
   num_prototypes: 15
   num_layers: 4
   num_maps: 32

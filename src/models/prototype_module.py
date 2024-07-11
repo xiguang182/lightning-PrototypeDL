@@ -5,7 +5,7 @@ from lightning import LightningModule
 from torchmetrics import MaxMetric, MeanMetric
 from torchmetrics.classification.accuracy import Accuracy
 
-from components.model_helper import list_of_distances, list_of_norms
+from src.models.components.model_helper import list_of_distances, list_of_norms
 
 
 class ProtoLitModule(LightningModule):

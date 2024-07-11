@@ -2,7 +2,7 @@ import os
 import torch
 from torch import nn
 
-from src.utils.proto_utils import list_of_distances
+from src.models.components.model_helper import list_of_distances
 
 """
 Adopted from @author Oscar Li
@@ -200,8 +200,10 @@ class PrototypeLayer(nn.Module):
             num_prototypes: int = 15, 
         ):
         super().__init__()
-
+        # device problem
         self.prototypes = torch.rand((num_prototypes, in_channels), requires_grad=True)
+        # has no attribute 'device'
+        # self.prototypes = torch.rand((num_prototypes, in_channels), requires_grad=True, device=self.device)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Perform a single forward pass through the network.
@@ -214,7 +216,7 @@ class PrototypeLayer(nn.Module):
 class CAEModel(nn.Module):
     def __init__(
             self,
-            in_shape: list = [1, 1, 28, 28],
+            in_shapes: list = [1, 1, 28, 28],
             num_classes: int = 10,
             num_layers: int = 4,
             num_maps: int = 32,
@@ -230,13 +232,13 @@ class CAEModel(nn.Module):
         """
 
         super().__init__()
-
+        in_shapes = tuple(in_shapes)
         # Encoder layer
-        self.encoder = EncoderLayer(in_channels= in_shape[1], out_channels = num_classes, num_layers = num_layers, num_maps = num_maps)
+        self.encoder = EncoderLayer(in_channels= in_shapes[1], out_channels = num_classes, num_layers = num_layers, num_maps = num_maps)
         
         # prototype layer
         # the number of input channels to the prototype layer is the dimension/length of the encoder output 28-14-7-4-2, (2,2)
-        self.in_channels_prototype = self.encoder.forward(torch.randn(in_shape)).view(-1,1).shape[0]
+        self.in_channels_prototype = self.encoder.forward(torch.randn(in_shapes)).view(-1,1).shape[0]
         # 40
         # print(self.in_channels_prototype)
 
@@ -251,7 +253,7 @@ class CAEModel(nn.Module):
 
         # [[28, 28], [14, 14], [7, 7], [4, 4]]
         # print(decoder_out_shapes)
-        self.decoder = DecoderLayer(in_channels = num_classes, out_channels = in_shape[1], num_layers = num_layers, num_maps = num_maps, out_shapes = decoder_out_shapes)
+        self.decoder = DecoderLayer(in_channels = num_classes, out_channels = in_shapes[1], num_layers = num_layers, num_maps = num_maps, out_shapes = decoder_out_shapes)
         
         # output layer
         self.fc = nn.Linear(in_features = num_prototypes, out_features = num_classes)

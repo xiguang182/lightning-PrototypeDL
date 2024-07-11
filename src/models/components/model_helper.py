@@ -31,10 +31,14 @@ def list_of_distances(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Each tensor has at least one dimension.
     When iterating over the dimension sizes, starting at the trailing dimension, the dimension sizes must either be equal, one of them is 1, or one of them does not exist.
     '''
+    # device issue, cannot be automaticcally solved by lightning
+    y = y.to(x.device)
     XX = torch.reshape(list_of_norms(x), (-1, 1))
     YY = torch.reshape(list_of_norms(y), (1, -1))
+    
+    XY = torch.matmul(x, torch.transpose(y, 0, 1))
     # broadcasting to compute the pairwise squared euclidean distances
-    output = XX - 2 * torch.matmul(x, torch.transpose(y, 0, 1)) + YY 
+    output = XX - 2 * XY + YY 
     return output
 
 def print_and_write(file, string) -> None:

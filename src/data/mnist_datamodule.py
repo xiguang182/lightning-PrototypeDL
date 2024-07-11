@@ -75,10 +75,11 @@ class MNISTDataModule(LightningDataModule):
         self.save_hyperparameters(logger=False)
 
         # data transformations
+        sigma = 4.
+        alpha =20.
         self.transforms = transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+            [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,)), transforms.ElasticTransform(alpha=alpha, sigma=sigma)]
         )
-
         self.data_train: Optional[Dataset] = None
         self.data_val: Optional[Dataset] = None
         self.data_test: Optional[Dataset] = None
