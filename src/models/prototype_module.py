@@ -1,10 +1,11 @@
 from typing import Any, Dict, Tuple
 
+import torchvision
 import torch
 from lightning import LightningModule
 from torchmetrics import MaxMetric, MeanMetric
 from torchmetrics.classification.accuracy import Accuracy
-
+import wandb
 from src.models.components.model_helper import list_of_distances, list_of_norms
 
 
@@ -127,7 +128,7 @@ class ProtoLitModule(LightningModule):
         loss = sum([a * b for a, b in zip(loss, self.lambdas)])
 
         preds = torch.argmax(logits, dim=1)
-        return loss, preds, y
+        return loss, preds, y, out_decoder
 
     def training_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
@@ -139,13 +140,25 @@ class ProtoLitModule(LightningModule):
         :param batch_idx: The index of the current batch.
         :return: A tensor of losses between model predictions and targets.
         """
-        loss, preds, targets = self.model_step(batch)
-
+        loss, preds, targets, decoded_imgs = self.model_step(batch)
+        # print(decoded_imgs.shape) torch.Size([128, 1, 28, 28])
         # update and log metrics
         self.train_loss(loss)
         self.train_acc(preds, targets)
         self.log("train/loss", self.train_loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("train/acc", self.train_acc, on_step=False, on_epoch=True, prog_bar=True)
+        
+        # hard coded for wandb logging due to wandb.Image object conversion
+        if batch_idx % 100 == 0:            
+            input_imgs = batch[0][:8]
+            decoded_imgs = decoded_imgs[:8]
+            imgs = torch.cat([input_imgs, decoded_imgs], dim=0)
+            grid = torchvision.utils.make_grid(imgs)
+            # print(grid.shape) make grid returns a tensor of shape (3, 64, 242) duplicate the first channel to make it (3, 64, 242)
+            self.logger.experiment.log(
+                {"train images (first row) and decoded images (second row)": wandb.Image(grid[0], caption=f"Epoch {self.current_epoch}, batch {batch_idx}00,  Loss {loss}")}
+            )
+
         # return loss or backpropagation will fail
         return loss
 
@@ -160,12 +173,20 @@ class ProtoLitModule(LightningModule):
             labels.
         :param batch_idx: The index of the current batch.
         """
-        loss, preds, targets = self.model_step(batch)
+        loss, preds, targets, _ = self.model_step(batch)
         # update and log metrics
         self.val_loss(loss)
         self.val_acc(preds, targets)
         self.log("val/loss", self.val_loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("val/acc", self.val_acc, on_step=False, on_epoch=True, prog_bar=True)
+        # if batch_idx % 100 == 0:
+        #     print(batch[0].shape)
+            
+        #     imgs = batch[0][:8]
+        #     grid = torchvision.utils.make_grid(imgs)
+        #     self.logger.experiment.log(
+        #         {"samples": [wandb.Image(img, caption="batch ${idx}00") for idx, img in enumerate(grid)]}
+        #     )
 
     def on_validation_epoch_end(self) -> None:
         "Lightning hook that is called when a validation epoch ends."
@@ -182,7 +203,7 @@ class ProtoLitModule(LightningModule):
             labels.
         :param batch_idx: The index of the current batch.
         """
-        loss, preds, targets = self.model_step(batch)
+        loss, preds, targets, _ = self.model_step(batch)
 
         # update and log metrics
         self.test_loss(loss)
@@ -191,6 +212,10 @@ class ProtoLitModule(LightningModule):
         self.log("test/acc", self.test_acc, on_step=False, on_epoch=True, prog_bar=True)
 
         # log images todo
+        # if batch_idx % 100 == 0:
+        #     batch = batch[:8]
+        #     grid = torchvision.utils.make_grid(x)
+        #     self.logger.experiment.add_image("test/input", grid, self.global_step)
 
     def on_test_epoch_end(self) -> None:
         """Lightning hook that is called when a test epoch ends."""
