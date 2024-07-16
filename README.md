@@ -5,7 +5,7 @@ The hydra lightning implemention of "Deep Learning for Case-based Reasoning thro
 Adapted from [https://github.com/mostafij-rahman/PyTorch-PrototypeDL](https://github.com/mostafij-rahman/PyTorch-PrototypeDL)
 
 Generated from template [https://github.com/ashleve/lightning-hydra-template](https://github.com/ashleve/lightning-hydra-template)
-For details on file structure, see tempalte page.
+For details on file structure, see template page.
 
 This implementation uses WANDB as logger.
 
@@ -16,8 +16,8 @@ This implementation uses WANDB as logger.
 
 ```bash
 # clone project
-git clone https://github.com/ashleve/lightning-hydra-template
-cd lightning-hydra-template
+git clone https://github.com/xiguang182/lightning-PrototypeDL.git
+cd lightning-PrototypeDL
 
 # [OPTIONAL] create conda environment
 conda create -n myenv python=3.9
@@ -32,8 +32,8 @@ pip install -r requirements.txt
 Or install manually with conda based of environment.yaml.
 
 ### WANDB setup
-Requires wandb login, see [quick start](https://docs.wandb.ai/quickstart)
-
+Requires wandb login for online logging, see [quick start](https://docs.wandb.ai/quickstart)
+Or config with other loggers. Refer to template page
 
 ```bash
 # train on CPU, by default
