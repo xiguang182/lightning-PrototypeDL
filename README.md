@@ -32,9 +32,15 @@ pip install -r requirements.txt
 Or install manually with conda based of environment.yaml.
 
 ### WANDB setup
+
+```bash
+!pip install wandb
+wandb login
+```
 Requires wandb login for online logging, see [quick start](https://docs.wandb.ai/quickstart)
 Or config with other loggers. Refer to template page
 
+### Training
 ```bash
 # train on CPU, by default
 python .\src\proto.py
