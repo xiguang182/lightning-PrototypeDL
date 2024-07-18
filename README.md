@@ -44,7 +44,8 @@ Or install manually
 ### WANDB setup
 
 ```bash
-!pip install wandb
+# wandb is included in requirements.txt
+# pip install wandb
 wandb login
 ```
 Requires wandb login for online logging, see wandb docs [quick start](https://docs.wandb.ai/quickstart)
