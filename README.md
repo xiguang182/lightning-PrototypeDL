@@ -29,7 +29,17 @@ conda activate myenv
 # install requirements
 pip install -r requirements.txt
 ```
-Or install manually with conda based of environment.yaml.
+Or directly create environment with .yaml file
+```bash
+# clone project
+git clone https://github.com/xiguang182/lightning-PrototypeDL.git
+cd lightning-PrototypeDL
+
+# Change Environment in environment.yaml
+conda env create -f environment.yaml
+conda activate ltProto
+```
+Or install manually
 
 ### WANDB setup
 
@@ -37,7 +47,7 @@ Or install manually with conda based of environment.yaml.
 !pip install wandb
 wandb login
 ```
-Requires wandb login for online logging, see [quick start](https://docs.wandb.ai/quickstart)
+Requires wandb login for online logging, see wandb docs [quick start](https://docs.wandb.ai/quickstart)
 Or config with other loggers. Refer to template page
 
 ### Training
