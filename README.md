@@ -35,7 +35,7 @@ Or directly create environment with .yaml file
 git clone https://github.com/xiguang182/lightning-PrototypeDL.git
 cd lightning-PrototypeDL
 
-# Change Environment in environment.yaml
+# Change Environment name in environment.yaml. Here is ltProto
 conda env create -f environment.yaml
 conda activate ltProto
 ```
