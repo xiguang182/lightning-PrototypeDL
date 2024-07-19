@@ -258,6 +258,7 @@ class CAEModel(nn.Module):
         # output layer
         self.fc = nn.Linear(in_features = num_prototypes, out_features = num_classes)
         self.feature_vectors = None
+        self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Perform a single forward pass through the network.
@@ -268,7 +269,7 @@ class CAEModel(nn.Module):
         encoder_out = self.encoder(x)
         self.feature_vectors = encoder_out
         prototype_out = self.prototype_layer(encoder_out.view(-1, self.in_channels_prototype))
-        fc_out = self.fc(prototype_out)
+        fc_out = self.softmax(self.fc(prototype_out))
         return fc_out
 
 if __name__ == "__main__":
