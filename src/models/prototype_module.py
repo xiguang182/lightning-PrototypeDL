@@ -5,6 +5,7 @@ import torch
 from lightning import LightningModule
 from torchmetrics import MaxMetric, MeanMetric
 from torchmetrics.classification.accuracy import Accuracy
+from torchmetrics.classification import MulticlassF1Score
 import wandb
 from src.models.components.model_helper import list_of_distances, list_of_norms
 
@@ -73,6 +74,11 @@ class ProtoLitModule(LightningModule):
         self.val_acc = Accuracy(task="multiclass", num_classes=10)
         self.test_acc = Accuracy(task="multiclass", num_classes=10)
 
+        # metric object for calculating f1 score
+        self.train_f1 = MulticlassF1Score(num_classes=10, multidim_average= 'global', average=None)
+        self.val_f1 = MulticlassF1Score(num_classes=10, multidim_average= 'global', average=None)
+        self.test_f1 = MulticlassF1Score(num_classes=10, multidim_average= 'global', average=None)
+
         # for averaging loss across batches
         self.train_loss = MeanMetric()
         self.val_loss = MeanMetric()
@@ -80,6 +86,7 @@ class ProtoLitModule(LightningModule):
 
         # for tracking best so far validation accuracy
         self.val_acc_best = MaxMetric()
+        self.val_f1_best = MaxMetric()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Perform a forward pass through the model `self.net`.
@@ -96,6 +103,9 @@ class ProtoLitModule(LightningModule):
         self.val_loss.reset()
         self.val_acc.reset()
         self.val_acc_best.reset()
+        self.train_f1.reset()
+        self.val_f1.reset()
+        self.test_f1.reset()
 
     def model_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor]
@@ -145,8 +155,10 @@ class ProtoLitModule(LightningModule):
         # update and log metrics
         self.train_loss(loss)
         self.train_acc(preds, targets)
+        self.train_f1(preds, targets)
         self.log("train/loss", self.train_loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("train/acc", self.train_acc, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("train/f1", self.train_f1[0], on_step=False, on_epoch=True, prog_bar=True,  metric_attribute="train/f1/class_0")
         
         # hard coded for wandb logging due to wandb.Image object conversion
         if batch_idx % 100 == 0:            
@@ -187,14 +199,24 @@ class ProtoLitModule(LightningModule):
         #     self.logger.experiment.log(
         #         {"samples": [wandb.Image(img, caption="batch ${idx}00") for idx, img in enumerate(grid)]}
         #     )
+        self.val_f1(preds, targets)
+        self.log("val/f1", self.val_f1[0], on_step=False, on_epoch=True, prog_bar=True, metric_attribute="val/f1/class_0")
 
     def on_validation_epoch_end(self) -> None:
         "Lightning hook that is called when a validation epoch ends."
         acc = self.val_acc.compute()  # get current val acc
+        # print(f"val/acc: {acc}")
         self.val_acc_best(acc)  # update best so far val acc
         # log `val_acc_best` as a value through `.compute()` method, instead of as a metric object
         # otherwise metric would be reset by lightning after each epoch
         self.log("val/acc_best", self.val_acc_best.compute(), sync_dist=True, prog_bar=True)
+
+        f1 = self.val_f1.compute()
+        # print(f"val/f1: {f1}")
+        self.val_f1_best(f1[0])
+        tmp = self.val_f1_best.compute()
+        # print(f"val/f1_best: {tmp}")
+        self.log("val/f1_best", tmp, sync_dist=True, prog_bar=True)
 
     def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> None:
         """Perform a single test step on a batch of data from the test set.
@@ -210,6 +232,9 @@ class ProtoLitModule(LightningModule):
         self.test_acc(preds, targets)
         self.log("test/loss", self.test_loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("test/acc", self.test_acc, on_step=False, on_epoch=True, prog_bar=True)
+
+        self.test_f1(preds, targets)
+        self.log("test/f1", self.test_f1[0], on_step=False, on_epoch=True, prog_bar=True, metric_attribute="test/f1/class_0")
 
         # log images todo
         # if batch_idx % 100 == 0:
